@@ -14,20 +14,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartContacts"
         tools:targetApi="31">
+
         <activity
             android:name=".Add_Contact"
-            android:exported="true"
-            />
+            android:exported="true"/>
+
         <activity
             android:name=".MainActivity"
             android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Receiver should be inside <application> -->
+        <receiver android:name=".DeleteContactReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.asifahmad.smartcontacts.DELETE_CONTACT"/>
+            </intent-filter>
+        </receiver>
+
+    </application>
 </manifest>

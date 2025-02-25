@@ -1,32 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.SmartContacts" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Background Color -->
+        <item name="android:windowBackground">@color/light_gray</item>
 
-    <!-- Base dark theme with black buttons and white background -->
-    <style name="Base.Theme.SmartContacts" parent="Theme.Material3.Dark.NoActionBar">
-        <!-- Status bar and button colors -->
+        <!-- Toolbar Color -->
         <item name="colorPrimary">@color/black</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorPrimaryContainer">@color/black</item>
-        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorPrimaryVariant">@color/white</item>
+        <item name="colorOnPrimary">@color/black</item>
 
-        <!-- Background colors -->
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:colorBackground">@color/white</item>
-
-        <!-- Status bar color -->
-        <item name="android:statusBarColor">@color/black</item>
-
-        <item name="colorOnSurface">@color/black</item>
-        <item name="colorOnBackground">@color/white</item>
-
-
-        <!-- Text colors -->
+        <!-- Text Colors -->
         <item name="android:textColor">@color/black</item>
         <item name="android:textColorHint">@color/black</item>
-        <item name="android:editTextColor">@color/black</item>
+
+        <!-- Button Style -->
+        <item name="android:buttonStyle">@style/ButtonStyleLight</item>
     </style>
-
-
-
-    <style name="Theme.SmartContacts" parent="Base.Theme.SmartContacts" />
-
 </resources>

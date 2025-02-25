@@ -11,10 +11,16 @@ import java.util.List;
 public interface ContactDao {
 
     @Insert
-    void insert(Contact contact);
+    long insert(Contact contact);
 
     @Query("SELECT * FROM contacts")
     List<Contact> getAllContacts();
+
+    @Query("DELETE FROM contacts WHERE id = :contactId")
+    void deleteById(int contactId);
+
+    @Query("SELECT * FROM contacts WHERE id = :contactId LIMIT 1")
+    Contact getContactById(int contactId);
 
     @Delete
     void delete(Contact contact);

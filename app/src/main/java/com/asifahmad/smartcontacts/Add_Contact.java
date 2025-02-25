@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -18,11 +19,16 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.room.Room;
 
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class Add_Contact extends AppCompatActivity {
 
@@ -101,8 +107,7 @@ public class Add_Contact extends AppCompatActivity {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        new TimePickerDialog(this, (view, hourOfDay, minuteOfHour) ->
-                timeEdit.setText(hourOfDay + ":" + minuteOfHour), hour, minute, false).show();
+        new TimePickerDialog(this, (view, hourOfDay, minuteOfHour) -> timeEdit.setText(hourOfDay + ":" + minuteOfHour), hour, minute, false).show();
     }
 
     private void openGallery() {
@@ -140,6 +145,39 @@ public class Add_Contact extends AppCompatActivity {
                 resultIntent.putExtra("imageUri", imageUri.toString());
             }
 
+            // ⚡ Database Instance (Ensure Non-Static Call)
+            ContactDatabase contactDatabase = Room.databaseBuilder(
+                            getApplicationContext(),
+                            ContactDatabase.class,
+                            "contacts_db"
+                    ).allowMainThreadQueries() // ❗ Remove in production
+                    .build();
+
+            ContactDao contactDao = contactDatabase.contactDao();
+
+            // ⚡ Get User-Entered Time from `timeEdit`
+            String timeStr = timeEdit.getText().toString();
+            long deleteTimeMillis = convertTimeToMillis(timeStr);
+
+            // ⚡ Create Contact with Delete Time
+            Contact contact = new Contact(
+                    nameEd.getText().toString(),
+                    phoneEd.getText().toString(),
+                    timeEdit.getText().toString(),
+                    imageUri != null ? imageUri.toString() : null,
+                    emailEd.getText().toString(),
+                    addressEd.getText().toString(),
+                    deleteTimeMillis // Store delete time in DB
+            );
+
+            // Insert Contact and Get ID
+            long contactId = contactDao.insert(contact);
+
+            Log.d("SaveContact", "New Contact Saved with ID: " + contactId + " Deletion at: " + deleteTimeMillis);
+
+            // Schedule Contact Deletion at User-Defined Time
+            ContactScheduler.scheduleContactDeletion(this, (int) contactId, deleteTimeMillis);
+
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
         }
@@ -172,5 +210,27 @@ public class Add_Contact extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private long convertTimeToMillis(String timeStr) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            Date date = sdf.parse(timeStr);
+
+            Calendar calendar = Calendar.getInstance();
+            Calendar timeCalendar = Calendar.getInstance();
+            timeCalendar.setTime(date);
+
+            // Set user-defined time in today's date
+            calendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+            calendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
+            calendar.set(Calendar.SECOND, 0);
+
+            return calendar.getTimeInMillis();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return System.currentTimeMillis(); // Default: current time if error
+        }
+    }
+
 
 }
