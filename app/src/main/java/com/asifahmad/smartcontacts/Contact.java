@@ -13,7 +13,7 @@ public class Contact {
     private String imageUri;
     private String email;
     private String address;
-    private long deleteTime;
+    private long deleteTime = 0;
 
     public Contact(String name, String phone, String time, String imageUri, String email, String address, long deleteTime) {
         this.name = name;

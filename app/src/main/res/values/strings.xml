@@ -3,8 +3,9 @@
     <string name="enter_contact_name">Enter contact name</string>
     <string name="time">Time</string>
     <string name="temporary_save">Temporary Save</string>
-    <string name="enter_address">Enter address</string>
+    <string name="enter_address">Enter address (optional)</string>
     <string name="save">Save</string>
-    <string name="enter_email">Enter email</string>
+    <string name="enter_email">Enter email (optional)</string>
     <string name="enter_phone_number">Enter phone number</string>
+    <string name="search_contact">Search contact</string>
 </resources>

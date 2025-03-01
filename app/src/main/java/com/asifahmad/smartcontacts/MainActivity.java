@@ -7,13 +7,16 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -45,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.On
         recyclerView = findViewById(R.id.recycler);
         FloatingActionButton addButton = findViewById(R.id.add_btn);
 
+
         contactDatabase = ContactDatabase.getInstance(this);
         contactList = contactDatabase.contactDao().getAllContacts();
         contactAdapter = new ContactAdapter(this, contactList, this);
@@ -61,8 +65,18 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.On
 
         FloatingActionButton search_button = findViewById(R.id.button_search);
         search_button.setOnClickListener(v -> {
-            Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show();
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            LayoutInflater inflater = LayoutInflater.from(this);
+            View dialogView = inflater.inflate(R.layout.dialog_search, null);
 
+            builder.setView(dialogView)
+                    .setPositiveButton("Search", (dialogInterface, i) -> {
+                        // Search button logic here
+                    })
+                    .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss());
+
+            AlertDialog dialog = builder.create();
+            dialog.show(); // Show the dialog
         });
 
 
@@ -100,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.On
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getAdapterPosition();
                 deleteContact(position);
+                Toast.makeText(MainActivity.this,"Contact deleted",Toast.LENGTH_SHORT).show();
             }
         };
 

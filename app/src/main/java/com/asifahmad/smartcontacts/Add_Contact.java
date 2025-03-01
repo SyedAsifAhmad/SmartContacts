@@ -7,7 +7,10 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +20,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.room.Room;
@@ -39,6 +43,9 @@ public class Add_Contact extends AppCompatActivity {
     private Uri imageUri;
     private Button saveBtn;
     private ImageButton addBtn;
+    private static final String PHONE_PATTERN = "^[0-9]+$"; // only numbers are allowed
+    private static final int MIN_PHONE_LENGTH = 10;
+    private static final int MAX_PHONE_LENGTH = 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +60,6 @@ public class Add_Contact extends AppCompatActivity {
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Add Contact");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -77,6 +83,20 @@ public class Add_Contact extends AppCompatActivity {
         checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> toggleTimePicker(isChecked));
         profImage.setOnClickListener(v -> openGallery());
         saveBtn.setOnClickListener(v -> saveContact());
+
+        // Real-time validation for phone number
+        phoneEd.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validatePhoneNumber();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void toggleAdditionalFields() {
@@ -98,7 +118,7 @@ public class Add_Contact extends AppCompatActivity {
             showTimePicker();
         } else {
             timeEdit.setVisibility(View.GONE);
-            timeEdit.setText(""); // Clear time when unchecked
+            timeEdit.setText("");
         }
     }
 
@@ -107,7 +127,8 @@ public class Add_Contact extends AppCompatActivity {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        new TimePickerDialog(this, (view, hourOfDay, minuteOfHour) -> timeEdit.setText(hourOfDay + ":" + minuteOfHour), hour, minute, false).show();
+        new TimePickerDialog(this, (view, hourOfDay, minuteOfHour) ->
+                timeEdit.setText(String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minuteOfHour)), hour, minute, false).show();
     }
 
     private void openGallery() {
@@ -134,49 +155,24 @@ public class Add_Contact extends AppCompatActivity {
 
     private void saveContact() {
         if (validateFields()) {
+            String timeStr = timeEdit.getText().toString();
+            long deleteTimeMillis = checkBox.isChecked() && !timeStr.isEmpty() ? convertTimeToMillis(timeStr) : 0;
+
+            if (deleteTimeMillis == -1) {
+                Toast.makeText(this, "Invalid time! Please select a future time.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             Intent resultIntent = new Intent();
             resultIntent.putExtra("name", nameEd.getText().toString());
             resultIntent.putExtra("phone", phoneEd.getText().toString());
-            resultIntent.putExtra("time", timeEdit.getText().toString());
+            resultIntent.putExtra("time", timeStr);
             resultIntent.putExtra("email", emailEd.getText().toString());
             resultIntent.putExtra("addr", addressEd.getText().toString());
 
             if (imageUri != null) {
                 resultIntent.putExtra("imageUri", imageUri.toString());
             }
-
-            // ⚡ Database Instance (Ensure Non-Static Call)
-            ContactDatabase contactDatabase = Room.databaseBuilder(
-                            getApplicationContext(),
-                            ContactDatabase.class,
-                            "contacts_db"
-                    ).allowMainThreadQueries() // ❗ Remove in production
-                    .build();
-
-            ContactDao contactDao = contactDatabase.contactDao();
-
-            // ⚡ Get User-Entered Time from `timeEdit`
-            String timeStr = timeEdit.getText().toString();
-            long deleteTimeMillis = convertTimeToMillis(timeStr);
-
-            // ⚡ Create Contact with Delete Time
-            Contact contact = new Contact(
-                    nameEd.getText().toString(),
-                    phoneEd.getText().toString(),
-                    timeEdit.getText().toString(),
-                    imageUri != null ? imageUri.toString() : null,
-                    emailEd.getText().toString(),
-                    addressEd.getText().toString(),
-                    deleteTimeMillis // Store delete time in DB
-            );
-
-            // Insert Contact and Get ID
-            long contactId = contactDao.insert(contact);
-
-            Log.d("SaveContact", "New Contact Saved with ID: " + contactId + " Deletion at: " + deleteTimeMillis);
-
-            // Schedule Contact Deletion at User-Defined Time
-            ContactScheduler.scheduleContactDeletion(this, (int) contactId, deleteTimeMillis);
 
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
@@ -191,21 +187,63 @@ public class Add_Contact extends AppCompatActivity {
             isValid = false;
         }
 
-        if (phoneEd.getText().toString().trim().isEmpty()) {
-            phoneEd.setError("Phone number is required");
+        if (!validatePhoneNumber()) {
             isValid = false;
         }
 
         if (!isValid) {
-            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please fill all required fields correctly", Toast.LENGTH_SHORT).show();
         }
         return isValid;
+    }
+
+    private boolean validatePhoneNumber() {
+        String phoneNumber = phoneEd.getText().toString().trim();
+
+        if (phoneNumber.isEmpty()) {
+            phoneEd.setError("Phone number is required");
+            return false;
+        }
+
+        if (!phoneNumber.matches(PHONE_PATTERN)) {
+            phoneEd.setError("Only numbers are allowed");
+            return false;
+        }
+
+        if (phoneNumber.length() < MIN_PHONE_LENGTH || phoneNumber.length() > MAX_PHONE_LENGTH) {
+            phoneEd.setError("Phone number must be between " + MIN_PHONE_LENGTH + " and " + MAX_PHONE_LENGTH + " digits");
+            return false;
+        }
+
+        phoneEd.setError(null); // Clear error if valid
+        return true;
+    }
+
+    private void alertOnBack(){
+        String name = nameEd.getText().toString().trim();
+        String phone = phoneEd.getText().toString().trim();
+
+        if (!name.isEmpty() && !phone.isEmpty()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(Add_Contact.this);
+            builder.setTitle("Discard text?")
+                    .setMessage("Are you sure you want to discard the entered details?")
+                    .setPositiveButton("Yes", (dialogInterface, i) -> finish())
+                    .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss());
+
+            AlertDialog dialog = builder.create();
+            dialog.show(); // Show the dialog
+        }
+
+    }
+    @Override
+    public void onBackPressed(){
+        alertOnBack();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            alertOnBack();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -217,20 +255,16 @@ public class Add_Contact extends AppCompatActivity {
             Date date = sdf.parse(timeStr);
 
             Calendar calendar = Calendar.getInstance();
-            Calendar timeCalendar = Calendar.getInstance();
-            timeCalendar.setTime(date);
+            calendar.setTime(date);
 
-            // Set user-defined time in today's date
-            calendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
-            calendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
-            calendar.set(Calendar.SECOND, 0);
+            if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+                return -1;
+            }
 
             return calendar.getTimeInMillis();
         } catch (ParseException e) {
             e.printStackTrace();
-            return System.currentTimeMillis(); // Default: current time if error
+            return System.currentTimeMillis();
         }
     }
-
-
 }

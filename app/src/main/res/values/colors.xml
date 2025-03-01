@@ -6,6 +6,7 @@
     <color name="dark_gray">#1E1E1E</color> <!-- Dark mode background -->
     <color name="accent">#007AFF</color> <!-- Blue accent color -->
     <color name="button_dark">#333333</color> <!-- Dark mode button -->
-    <color name="button_light">#000000</color> <!-- Light mode button -->
+    <color name="button_light">#FFFFFF</color> <!-- Light mode button -->
+    <color name="colorOnSecondary">#FFFFFF</color>
     <color name="transp">#00FFFFFF</color>
 </resources>

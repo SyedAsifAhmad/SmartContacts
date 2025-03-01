@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.1"
+coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -12,6 +13,7 @@ materialVersion = "1.9.0"
 roomRuntime = "2.6.1"
 
 [libraries]
+core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

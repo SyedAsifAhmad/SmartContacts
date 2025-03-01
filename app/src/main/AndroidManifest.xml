@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
@@ -17,11 +18,12 @@
 
         <activity
             android:name=".Add_Contact"
+            android:theme="@style/Theme.SmartContacts"
             android:exported="true"/>
 
         <activity
             android:name=".MainActivity"
-            android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
+            android:theme="@style/Theme.SmartContacts"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
